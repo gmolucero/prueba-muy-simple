@@ -1,0 +1,18 @@
+body { margin: 0; font-family: system-ui, sans-serif; color: #111827; background: #f9fafb; }
+h2 { margin-top: 0; }
+.row { display: flex; justify-content: space-between; align-items: center; }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { text-align: left; padding: .6rem .75rem; border-bottom: 1px solid #e5e7eb; }
+form { display: flex; flex-direction: column; gap: .75rem; max-width: 560px; }
+label { display: flex; flex-direction: column; gap: .25rem; font-weight: 500; }
+input { padding: .5rem; border: 1px solid #9ca3af; border-radius: 4px; }
+.signer { display: grid; grid-template-columns: 1fr 1fr auto; gap: .5rem; margin-bottom: .5rem; }
+.signer small { grid-column: 1 / -1; }
+button { padding: .5rem .9rem; border: 0; border-radius: 4px; background: #2563eb; color: #fff; cursor: pointer; width: fit-content; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.error { color: #b91c1c; }
+.success { background: #ecfdf5; border: 1px solid #10b981; padding: .75rem 1rem; border-radius: 4px; }
+.badge { padding: .15rem .6rem; border-radius: 999px; font-size: .85rem; }
+.badge.pendiente { background: #fef3c7; color: #92400e; }
+.badge.firmado_parcial { background: #dbeafe; color: #1e40af; }
+.badge.completo { background: #d1fae5; color: #065f46; }

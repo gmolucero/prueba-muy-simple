@@ -1,0 +1,5 @@
+header { display: flex; gap: 2rem; align-items: center; padding: 1rem 1.5rem; background: #1f2937; color: #fff; }
+nav { display: flex; gap: 1rem; }
+nav a { color: #cbd5e1; text-decoration: none; }
+nav a.active { color: #fff; font-weight: 600; border-bottom: 2px solid #fff; }
+main { max-width: 860px; margin: 1.5rem auto; padding: 0 1rem; }
