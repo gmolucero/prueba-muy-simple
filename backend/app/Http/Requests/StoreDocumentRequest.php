@@ -35,9 +35,9 @@ class StoreDocumentRequest extends FormRequest
     {
         return [
             'file.mimes' => 'El archivo debe ser PDF, imagen (jpg, png, webp) o de ofimática (doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp).',
-            'file.max' => 'El archivo no puede superar los 10 MB.',
+            'file.max' => 'El archivo no puede superar los 2 MB.',
             // PHP corta las subidas que exceden upload_max_filesize antes de llegar a las reglas.
-            'file.uploaded' => 'No se pudo subir el archivo (máximo 10 MB).',
+            'file.uploaded' => 'No se pudo subir el archivo (máximo 2 MB).',
         ];
     }
 
@@ -46,8 +46,8 @@ class StoreDocumentRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             // PDF, imágenes y ofimática (Microsoft Office / OpenDocument). `mimes` valida por el
-            // contenido real del archivo, no solo por la extensión del nombre. Máx. 10 MB.
-            'file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,ppt,pptx,odt,ods,odp', 'max:10240'],
+            // contenido real del archivo, no solo por la extensión del nombre. Máx. 2 MB.
+            'file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx,xls,xlsx,ppt,pptx,odt,ods,odp', 'max:2048'],
             'signers' => ['required', 'array', 'min:1', 'max:20'],
             'signers.*.rut' => ['required', 'string', new ChileanRut, 'distinct'],
             'signers.*.email' => ['required', 'email:rfc', 'max:255'],

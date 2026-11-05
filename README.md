@@ -53,7 +53,7 @@ curl -X POST -H "X-Signature: $SIG" -H 'Content-Type: application/json' -H 'Acce
 
 | Método | Ruta | Descripción | Errores |
 |---|---|---|---|
-| POST | `/api/documents` | Multipart: `title`, `file` (PDF, imagen u ofimática ≤ 10 MB), `signers[i][rut]`, `signers[i][email]`. 201 con documento y `sign_links`. | 422 |
+| POST | `/api/documents` | Multipart: `title`, `file` (PDF, imagen u ofimática ≤ 2 MB), `signers[i][rut]`, `signers[i][email]`. 201 con documento y `sign_links`. | 422 |
 | GET | `/api/documents` | Lista paginada con `status`, `signed_count`, `signers_count` y firmantes. | |
 | GET | `/api/sign/{token}` | Datos del documento y del firmante. | 404, 410 si expiró |
 | POST | `/api/sign/{token}` | Firma al dueño del token. | 404, 409 si ya firmó, 410 si expiró |
@@ -69,7 +69,7 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 - **Token** aleatorio de 64 caracteres, con índice único, oculto en las respuestas salvo en la creación del documento. Throttle de 30/min en la firma.
 - **Expiración del enlace:** cada token tiene `token_expires_at` (por defecto 7 días desde la creación; se cambia con `SIGN_TOKEN_TTL_DAYS`). Un enlace vencido responde **410 Gone** en consulta, firma y webhook. La condición de expiración va dentro del `UPDATE` atómico de la firma, así que no se puede firmar justo después de vencer. Quien ya firmó antes de que venciera puede seguir viendo su firma. El plazo es fijo: no hay reenvío ni renovación del enlace.
 - **RUT chileno** validado con módulo 11 y con un único formato permitido: sin puntos y con guión (`12345678-5`). Los RUT con puntos o sin guión se rechazan con 422. La `k` se pasa a mayúscula para que `10000013-k` y `10000013-K` cuenten como el mismo firmante. El campo del front se formatea mientras se escribe o se pega (solo dígitos y K, con guión); la validación real sigue siendo la del servidor.
-- **Tipos de archivo:** PDF, imágenes (jpg, png, webp) y ofimática (doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp), máx. 10 MB. `mimes` valida por el contenido real del archivo, no solo por la extensión. El Dockerfile sube `upload_max_filesize` a 10 MB (PHP trae 2 MB por defecto). No se convierte ni se previsualiza el archivo.
+- **Tipos de archivo:** PDF, imágenes (jpg, png, webp) y ofimática (doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp), máx. 2 MB. `mimes` valida por el contenido real del archivo, no solo por la extensión. El límite coincide con el `upload_max_filesize` por defecto de PHP (2 MB), que el Dockerfile deja explícito. No se convierte ni se previsualiza el archivo.
 - **Archivos** en el disco `local` (privado, no servido públicamente). Si falla la transacción se borra el archivo para no dejar huérfanos.
 - **SQLite** para desarrollo, demo y tests, por simplicidad (cero servicios extra). En producción usaría MariaDB/PostgreSQL; el código no depende de SQLite.
 - **Sin autenticación, sin correo real ni colas**, a propósito: es una PoC acotada en tiempo. Los enlaces de firma se muestran al crear el documento.

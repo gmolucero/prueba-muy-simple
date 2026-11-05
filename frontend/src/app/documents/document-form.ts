@@ -39,7 +39,7 @@ import { RutInput } from '../shared/rut-input.directive';
         }
 
         <label
-          >Documento (PDF, imagen u ofimática; máx. 10 MB)
+          >Documento (PDF, imagen u ofimática; máx. 2 MB)
           <input
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp"

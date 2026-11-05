@@ -100,10 +100,10 @@ class DocumentApiTest extends TestCase
         ];
     }
 
-    public function test_rejects_files_over_10mb(): void
+    public function test_rejects_files_over_2mb(): void
     {
         $this->postJson('/api/documents', $this->payload([
-            'file' => UploadedFile::fake()->create('grande.pdf', 10241, 'application/pdf'),
+            'file' => UploadedFile::fake()->create('grande.pdf', 2049, 'application/pdf'),
         ]))->assertUnprocessable()->assertJsonValidationErrors('file');
     }
 
