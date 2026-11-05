@@ -17,7 +17,7 @@ class DocumentApiTest extends TestCase
             'title' => 'Contrato de arriendo',
             'file' => UploadedFile::fake()->create('contrato.pdf', 100, 'application/pdf'),
             'signers' => [
-                ['rut' => '11.111.111-1', 'email' => 'a@x.cl'],
+                ['rut' => '11111111-1', 'email' => 'a@x.cl'],
                 ['rut' => '12345678-5', 'email' => 'b@x.cl'],
             ],
         ], $override);
@@ -54,11 +54,20 @@ class DocumentApiTest extends TestCase
             ->assertJsonValidationErrors(['signers.0.rut', 'signers.0.email']);
     }
 
-    public function test_rejects_duplicated_rut_even_with_different_format(): void
+    public function test_rejects_ruts_with_dots_or_without_hyphen(): void
+    {
+        foreach (['11.111.111-1', '111111111'] as $rut) {
+            $this->postJson('/api/documents', $this->payload(['signers' => [
+                ['rut' => $rut, 'email' => 'a@x.cl'],
+            ]]))->assertUnprocessable()->assertJsonValidationErrors('signers.0.rut');
+        }
+    }
+
+    public function test_rejects_duplicated_rut_even_if_k_case_differs(): void
     {
         $this->postJson('/api/documents', $this->payload(['signers' => [
-            ['rut' => '11.111.111-1', 'email' => 'a@x.cl'],
-            ['rut' => '11111111-1', 'email' => 'b@x.cl'],
+            ['rut' => '10000013-k', 'email' => 'a@x.cl'],
+            ['rut' => '10000013-K', 'email' => 'b@x.cl'],
         ]]))->assertUnprocessable()->assertJsonValidationErrors('signers.1.rut');
     }
 

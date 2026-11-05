@@ -23,7 +23,7 @@ El front proxea `/api` hacia la API, por eso no hay CORS que configurar en desar
 ### Tests
 
 ```bash
-docker compose run --rm api php artisan test                      # backend (34 tests)
+docker compose run --rm api php artisan test                      # backend (36 tests)
 docker compose run --rm -e CI=true web npx ng test --watch=false  # frontend (7 tests)
 ```
 
@@ -38,7 +38,7 @@ docker compose run --rm -e CI=true web npx ng test --watch=false  # frontend (7 
 ```bash
 # Crear documento (devuelve sign_links con los tokens)
 curl -H 'Accept: application/json' -F title=Contrato -F file=@contrato.pdf \
-  -F 'signers[0][rut]=11.111.111-1' -F 'signers[0][email]=a@x.cl' \
+  -F 'signers[0][rut]=11111111-1' -F 'signers[0][email]=a@x.cl' \
   -F 'signers[1][rut]=12345678-5'   -F 'signers[1][email]=b@x.cl' \
   http://localhost:8000/api/documents
 
@@ -67,7 +67,7 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 - **Firma atómica e idempotente.** `Signer::markAsSigned()` hace un `UPDATE ... WHERE state = 'pendiente'`: dos peticiones simultáneas con el mismo token no pueden firmar ambas, y la fecha de la primera firma nunca se pisa. La API de firma responde 409; el webhook responde 200 con `changed: false`, porque reintentar un callback no debe ser un error.
 - **Webhook protegido con HMAC-SHA256** sobre el cuerpo crudo, comparado con `hash_equals`. Si no hay secreto configurado se rechaza todo (fail closed). El secreto está en `WEBHOOK_SECRET` (`backend/.env`).
 - **Token** aleatorio de 64 caracteres, con índice único, oculto en las respuestas salvo en la creación del documento. Throttle de 30/min en la firma.
-- **RUT chileno** validado con módulo 11 y normalizado a `12345678-5` antes de validar y guardar, de modo que `11.111.111-1` y `11111111-1` cuenten como el mismo firmante. Hay validación en el cliente solo por UX; la válida es la del servidor.
+- **RUT chileno** validado con módulo 11 y con un único formato permitido: sin puntos y con guión (`12345678-5`). Los RUT con puntos o sin guión se rechazan con 422. La `k` se pasa a mayúscula para que `10000013-k` y `10000013-K` cuenten como el mismo firmante. Hay validación en el cliente solo por UX; la válida es la del servidor.
 - **Archivos** en el disco `local` (privado, no servido públicamente). Si falla la transacción se borra el archivo para no dejar huérfanos.
 - **SQLite** para desarrollo, demo y tests, por simplicidad (cero servicios extra). En producción usaría MariaDB/PostgreSQL; el código no depende de SQLite.
 - **Sin autenticación, sin correo real ni colas**, a propósito: es una PoC acotada en tiempo. Los enlaces de firma se muestran al crear el documento.

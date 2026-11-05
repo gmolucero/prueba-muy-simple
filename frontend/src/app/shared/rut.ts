@@ -1,10 +1,9 @@
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 
-/** Quita puntos, espacios y guion; devuelve "cuerpo-DV" o null si no parece un RUT. */
+/** El RUT debe ir sin puntos y con guion ("12345678-5"). Devuelve ese formato (K en mayúscula) o null. */
 export function normalizeRut(rut: string): string | null {
-  const clean = rut.replace(/[.\s-]/g, '').toUpperCase();
-  if (!/^\d{7,8}[\dK]$/.test(clean)) return null;
-  return `${clean.slice(0, -1)}-${clean.slice(-1)}`;
+  const match = /^(\d{7,8})-([\dKk])$/.exec(rut);
+  return match ? `${match[1]}-${match[2].toUpperCase()}` : null;
 }
 
 export function isValidRut(rut: string): boolean {

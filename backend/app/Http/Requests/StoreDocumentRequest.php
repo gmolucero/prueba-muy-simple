@@ -13,7 +13,7 @@ class StoreDocumentRequest extends FormRequest
         return true;
     }
 
-    /** Normaliza los RUT (sin puntos, con guion) para que `distinct` compare el mismo formato. */
+    /** Pasa la K a mayúscula para que `distinct` trate 10000013-k y 10000013-K como el mismo RUT. */
     protected function prepareForValidation(): void
     {
         $signers = $this->input('signers');

@@ -24,8 +24,6 @@ class ChileanRutTest extends TestCase
     {
         return [
             'con guion' => ['11111111-1'],
-            'con puntos' => ['12.345.678-5'],
-            'sin guion' => ['123456785'],
             'dv K' => ['10000013-K'],
             'dv k minúscula' => ['10000013-k'],
             'dv cero' => ['11111117-0'],
@@ -36,16 +34,20 @@ class ChileanRutTest extends TestCase
     {
         return [
             'dv incorrecto' => ['11111111-2'],
+            'con puntos' => ['12.345.678-5'],
+            'sin guion' => ['123456785'],
+            'espacios' => [' 12345678-5'],
             'muy corto' => ['11-1'],
             'letras' => ['abcdefgh-1'],
             'vacío' => [''],
         ];
     }
 
-    public function test_normalize_returns_canonical_format(): void
+    public function test_normalize_only_accepts_format_without_dots_and_with_hyphen(): void
     {
-        $this->assertSame('12345678-5', Rut::normalize('12.345.678-5'));
-        $this->assertSame('10000013-K', Rut::normalize('10.000.013-k'));
+        $this->assertSame('12345678-5', Rut::normalize('12345678-5'));
+        $this->assertSame('10000013-K', Rut::normalize('10000013-k'));
+        $this->assertNull(Rut::normalize('12.345.678-5'));
         $this->assertNull(Rut::normalize('basura'));
     }
 }

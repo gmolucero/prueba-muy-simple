@@ -40,11 +40,11 @@ import { rutValidator } from '../shared/rut';
         <div formArrayName="signers">
           @for (signer of signers.controls; track signer; let i = $index) {
             <div class="signer" [formGroupName]="i">
-              <input formControlName="rut" placeholder="RUT (ej. 12.345.678-5)" />
+              <input formControlName="rut" placeholder="RUT sin puntos y con guión (ej. 12345678-5)" />
               <input formControlName="email" type="email" placeholder="email@dominio.cl" />
               <button type="button" (click)="removeSigner(i)" [disabled]="signers.length === 1">Quitar</button>
               @if ((signer.controls.rut.touched || submitted()) && signer.controls.rut.invalid) {
-                <small class="error">RUT inválido.</small>
+                <small class="error">RUT inválido: ingrésalo sin puntos y con guión (ej. 12345678-5).</small>
               }
               @if ((signer.controls.email.touched || submitted()) && signer.controls.email.invalid) {
                 <small class="error">Email inválido.</small>

@@ -3,20 +3,21 @@
 namespace App\Support;
 
 /**
- * Utilidades para RUT chileno. Formato canónico de almacenamiento: "18062028-1".
+ * Utilidades para RUT chileno. Formato único aceptado y almacenado: sin puntos y con guion ("18062028-1").
  */
 final class Rut
 {
-    /** Quita puntos, espacios y guion; devuelve "cuerpo-DV" en mayúscula, o null si no tiene forma de RUT. */
+    /**
+     * El RUT debe venir sin puntos y con guion ("12345678-5"). Devuelve ese formato con el
+     * dígito verificador en mayúscula (K), o null si no cumple el formato.
+     */
     public static function normalize(string $rut): ?string
     {
-        $clean = strtoupper(preg_replace('/[\.\s\-]/', '', $rut) ?? '');
-
-        if (! preg_match('/^\d{7,8}[\dK]$/', $clean)) {
+        if (! preg_match('/^(\d{7,8})-([\dKk])$/', $rut, $m)) {
             return null;
         }
 
-        return substr($clean, 0, -1).'-'.substr($clean, -1);
+        return $m[1].'-'.strtoupper($m[2]);
     }
 
     public static function isValid(string $rut): bool
