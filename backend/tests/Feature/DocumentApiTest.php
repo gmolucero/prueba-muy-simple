@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class DocumentApiTest extends TestCase
@@ -71,7 +72,37 @@ class DocumentApiTest extends TestCase
         ]]))->assertUnprocessable()->assertJsonValidationErrors('signers.1.rut');
     }
 
-    public function test_rejects_non_pdf_file(): void
+    #[DataProvider('allowedFiles')]
+    public function test_accepts_pdf_images_and_office_files(string $name, string $mime): void
+    {
+        Storage::fake('local');
+
+        $this->postJson('/api/documents', $this->payload([
+            'file' => UploadedFile::fake()->create($name, 50, $mime),
+        ]))->assertCreated();
+    }
+
+    public static function allowedFiles(): array
+    {
+        return [
+            'pdf' => ['a.pdf', 'application/pdf'],
+            'png' => ['a.png', 'image/png'],
+            'jpg' => ['a.jpg', 'image/jpeg'],
+            'docx' => ['a.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            'xlsx' => ['a.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+            'pptx' => ['a.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+            'odt' => ['a.odt', 'application/vnd.oasis.opendocument.text'],
+        ];
+    }
+
+    public function test_rejects_files_over_10mb(): void
+    {
+        $this->postJson('/api/documents', $this->payload([
+            'file' => UploadedFile::fake()->create('grande.pdf', 10241, 'application/pdf'),
+        ]))->assertUnprocessable()->assertJsonValidationErrors('file');
+    }
+
+    public function test_rejects_disallowed_file_types(): void
     {
         $this->postJson('/api/documents', $this->payload([
             'file' => UploadedFile::fake()->create('virus.exe', 10, 'application/octet-stream'),

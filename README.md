@@ -1,6 +1,6 @@
 # Mini flujo de firma de documentos
 
-API en **Laravel 13** + front en **Angular 22**. Se sube un PDF, se asignan N firmantes (email + RUT) y cada uno firma desde un enlace único con token. El documento pasa de `pendiente` → `firmado_parcial` → `completo`.
+API en **Laravel 13** + front en **Angular 22**. Se sube un documento (PDF, imagen u ofimática), se asignan N firmantes (email + RUT) y cada uno firma desde un enlace único con token. El documento pasa de `pendiente` → `firmado_parcial` → `completo`.
 
 ## Cómo correrlo
 
@@ -23,13 +23,13 @@ El front proxea `/api` hacia la API, por eso no hay CORS que configurar en desar
 ### Tests
 
 ```bash
-docker compose run --rm api php artisan test                      # backend (36 tests)
+docker compose run --rm api php artisan test                      # backend (44 tests)
 docker compose run --rm -e CI=true web npx ng test --watch=false  # frontend (7 tests)
 ```
 
 ## Flujo de uso
 
-1. En http://localhost:4200/new sube un PDF y agrega firmantes. Al crear, la pantalla muestra los **enlaces de firma** (no se envían correos; ver decisiones).
+1. En http://localhost:4200/new sube un documento y agrega firmantes. Al crear, la pantalla muestra los **enlaces de firma** (no se envían correos; ver decisiones).
 2. Abre cada enlace `/sign/<token>` y pulsa «Firmar documento».
 3. En http://localhost:4200 verás el estado actualizado.
 
@@ -53,7 +53,7 @@ curl -X POST -H "X-Signature: $SIG" -H 'Content-Type: application/json' -H 'Acce
 
 | Método | Ruta | Descripción | Errores |
 |---|---|---|---|
-| POST | `/api/documents` | Multipart: `title`, `file` (PDF ≤ 5 MB), `signers[i][rut]`, `signers[i][email]`. 201 con documento y `sign_links`. | 422 |
+| POST | `/api/documents` | Multipart: `title`, `file` (PDF, imagen u ofimática ≤ 10 MB), `signers[i][rut]`, `signers[i][email]`. 201 con documento y `sign_links`. | 422 |
 | GET | `/api/documents` | Lista paginada con `status`, `signed_count`, `signers_count` y firmantes. | |
 | GET | `/api/sign/{token}` | Datos del documento y del firmante. | 404 |
 | POST | `/api/sign/{token}` | Firma al dueño del token. | 404, 409 si ya firmó |
@@ -68,6 +68,7 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 - **Webhook protegido con HMAC-SHA256** sobre el cuerpo crudo, comparado con `hash_equals`. Si no hay secreto configurado se rechaza todo (fail closed). El secreto está en `WEBHOOK_SECRET` (`backend/.env`).
 - **Token** aleatorio de 64 caracteres, con índice único, oculto en las respuestas salvo en la creación del documento. Throttle de 30/min en la firma.
 - **RUT chileno** validado con módulo 11 y con un único formato permitido: sin puntos y con guión (`12345678-5`). Los RUT con puntos o sin guión se rechazan con 422. La `k` se pasa a mayúscula para que `10000013-k` y `10000013-K` cuenten como el mismo firmante. Hay validación en el cliente solo por UX; la válida es la del servidor.
+- **Tipos de archivo:** PDF, imágenes (jpg, png, webp) y ofimática (doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp), máx. 10 MB. `mimes` valida por el contenido real del archivo, no solo por la extensión. El Dockerfile sube `upload_max_filesize` a 10 MB (PHP trae 2 MB por defecto). No se convierte ni se previsualiza el archivo.
 - **Archivos** en el disco `local` (privado, no servido públicamente). Si falla la transacción se borra el archivo para no dejar huérfanos.
 - **SQLite** para desarrollo, demo y tests, por simplicidad (cero servicios extra). En producción usaría MariaDB/PostgreSQL; el código no depende de SQLite.
 - **Sin autenticación, sin correo real ni colas**, a propósito: es una PoC acotada en tiempo. Los enlaces de firma se muestran al crear el documento.
@@ -78,7 +79,7 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 - Autenticación de quien crea documentos y permisos para listarlos.
 - Envío real de correos con el enlace (cola + `Mailable`), y reenvío.
 - Expiración de tokens y guardar solo su hash en base de datos.
-- Descarga/visualización del PDF en la página de firma y firma electrónica con validez legal.
+- Descarga/visualización del documento en la página de firma y firma electrónica con validez legal.
 - Almacenamiento en S3, imagen Docker de producción (nginx + php-fpm, build de Angular), CI.
 - Tests end-to-end del front (Playwright).
 

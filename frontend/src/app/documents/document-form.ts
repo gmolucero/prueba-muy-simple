@@ -29,11 +29,11 @@ import { rutValidator } from '../shared/rut';
           <small class="error">El título es obligatorio.</small>
         }
 
-        <label>Archivo PDF (máx. 5 MB)
-          <input type="file" accept="application/pdf" (change)="onFile($event)" />
+        <label>Documento (PDF, imagen u ofimática; máx. 10 MB)
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp" (change)="onFile($event)" />
         </label>
         @if (submitted() && !file()) {
-          <small class="error">Selecciona un PDF.</small>
+          <small class="error">Selecciona un archivo.</small>
         }
 
         <h3>Firmantes</h3>
