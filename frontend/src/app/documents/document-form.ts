@@ -4,34 +4,47 @@ import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { RouterLink } from '@angular/router';
 import { ApiService, SignLink, errorMessage } from '../api.service';
 import { rutValidator } from '../shared/rut';
+import { RutInput } from '../shared/rut-input.directive';
 
 @Component({
   selector: 'app-document-form',
-  imports: [ReactiveFormsModule, RouterLink, DatePipe],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, RutInput],
   template: `
     <h2>Nuevo documento</h2>
 
     @if (links(); as created) {
       <div class="success" role="status">
-        <p><strong>Documento creado.</strong> Enlaces de firma (no se envían correos en esta PoC):</p>
+        <p>
+          <strong>Documento creado.</strong> Enlaces de firma (no se envían correos en esta PoC):
+        </p>
         <ul>
           @for (link of created; track link.rut) {
-            <li>{{ link.email }} ({{ link.rut }}): <a [href]="link.sign_url">{{ link.sign_url }}</a> (vence el {{ link.expires_at | date: 'dd-MM-yyyy HH:mm' }})</li>
+            <li>
+              {{ link.email }} ({{ link.rut }}):
+              <a [href]="link.sign_url">{{ link.sign_url }}</a> (vence el
+              {{ link.expires_at | date: 'dd-MM-yyyy HH:mm' }})
+            </li>
           }
         </ul>
         <a routerLink="/">Ver documentos</a>
       </div>
     } @else {
       <form [formGroup]="form" (ngSubmit)="submit()">
-        <label>Título
+        <label
+          >Título
           <input formControlName="title" />
         </label>
         @if (touched('title') && form.controls.title.invalid) {
           <small class="error">El título es obligatorio.</small>
         }
 
-        <label>Documento (PDF, imagen u ofimática; máx. 10 MB)
-          <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp" (change)="onFile($event)" />
+        <label
+          >Documento (PDF, imagen u ofimática; máx. 10 MB)
+          <input
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp"
+            (change)="onFile($event)"
+          />
         </label>
         @if (submitted() && !file()) {
           <small class="error">Selecciona un archivo.</small>
@@ -41,13 +54,23 @@ import { rutValidator } from '../shared/rut';
         <div formArrayName="signers">
           @for (signer of signers.controls; track signer; let i = $index) {
             <div class="signer" [formGroupName]="i">
-              <input formControlName="rut" placeholder="RUT sin puntos y con guión (ej. 12345678-5)" />
+              <input
+                formControlName="rut"
+                appRutInput
+                placeholder="RUT (ej. 12345678-5)"
+              />
               <input formControlName="email" type="email" placeholder="email@dominio.cl" />
-              <button type="button" (click)="removeSigner(i)" [disabled]="signers.length === 1">Quitar</button>
+              <button type="button" (click)="removeSigner(i)" [disabled]="signers.length === 1">
+                Quitar
+              </button>
               @if ((signer.controls.rut.touched || submitted()) && signer.controls.rut.invalid) {
-                <small class="error">RUT inválido: ingrésalo sin puntos y con guión (ej. 12345678-5).</small>
+                <small class="error"
+                  >RUT inválido: ingrésalo sin puntos y con guión (ej. 12345678-5).</small
+                >
               }
-              @if ((signer.controls.email.touched || submitted()) && signer.controls.email.invalid) {
+              @if (
+                (signer.controls.email.touched || submitted()) && signer.controls.email.invalid
+              ) {
                 <small class="error">Email inválido.</small>
               }
             </div>
@@ -58,7 +81,9 @@ import { rutValidator } from '../shared/rut';
         @if (error()) {
           <p class="error" role="alert">{{ error() }}</p>
         }
-        <button type="submit" [disabled]="saving()">{{ saving() ? 'Guardando…' : 'Crear documento' }}</button>
+        <button type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : 'Crear documento' }}
+        </button>
       </form>
     }
   `,

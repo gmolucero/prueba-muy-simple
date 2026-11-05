@@ -24,7 +24,7 @@ El front proxea `/api` hacia la API, por eso no hay CORS que configurar en desar
 
 ```bash
 docker compose run --rm api php artisan test                      # backend (49 tests)
-docker compose run --rm -e CI=true web npx ng test --watch=false  # frontend (8 tests)
+docker compose run --rm -e CI=true web npx ng test --watch=false  # frontend (15 tests)
 ```
 
 ## Flujo de uso
@@ -68,7 +68,7 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 - **Webhook protegido con HMAC-SHA256** sobre el cuerpo crudo, comparado con `hash_equals`. Si no hay secreto configurado se rechaza todo (fail closed). El secreto está en `WEBHOOK_SECRET` (`backend/.env`).
 - **Token** aleatorio de 64 caracteres, con índice único, oculto en las respuestas salvo en la creación del documento. Throttle de 30/min en la firma.
 - **Expiración del enlace:** cada token tiene `token_expires_at` (por defecto 7 días desde la creación; se cambia con `SIGN_TOKEN_TTL_DAYS`). Un enlace vencido responde **410 Gone** en consulta, firma y webhook. La condición de expiración va dentro del `UPDATE` atómico de la firma, así que no se puede firmar justo después de vencer. Quien ya firmó antes de que venciera puede seguir viendo su firma. El plazo es fijo: no hay reenvío ni renovación del enlace.
-- **RUT chileno** validado con módulo 11 y con un único formato permitido: sin puntos y con guión (`12345678-5`). Los RUT con puntos o sin guión se rechazan con 422. La `k` se pasa a mayúscula para que `10000013-k` y `10000013-K` cuenten como el mismo firmante. Hay validación en el cliente solo por UX; la válida es la del servidor.
+- **RUT chileno** validado con módulo 11 y con un único formato permitido: sin puntos y con guión (`12345678-5`). Los RUT con puntos o sin guión se rechazan con 422. La `k` se pasa a mayúscula para que `10000013-k` y `10000013-K` cuenten como el mismo firmante. El campo del front se formatea mientras se escribe o se pega (solo dígitos y K, con guión); la validación real sigue siendo la del servidor.
 - **Tipos de archivo:** PDF, imágenes (jpg, png, webp) y ofimática (doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp), máx. 10 MB. `mimes` valida por el contenido real del archivo, no solo por la extensión. El Dockerfile sube `upload_max_filesize` a 10 MB (PHP trae 2 MB por defecto). No se convierte ni se previsualiza el archivo.
 - **Archivos** en el disco `local` (privado, no servido públicamente). Si falla la transacción se borra el archivo para no dejar huérfanos.
 - **SQLite** para desarrollo, demo y tests, por simplicidad (cero servicios extra). En producción usaría MariaDB/PostgreSQL; el código no depende de SQLite.
