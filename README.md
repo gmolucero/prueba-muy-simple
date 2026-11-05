@@ -4,7 +4,7 @@ API en **Laravel 13** + front en **Angular 22**. Se sube un documento (PDF, imag
 
 ## Cómo correrlo
 
-Requisitos: Docker y Docker Compose. No necesitas PHP, Composer ni Node en tu máquina.
+Requisitos: Docker y Docker Compose.
 
 ```bash
 export GID=$(id -g)        # para que los archivos generados sean tuyos (UID ya existe en bash)
@@ -13,12 +13,12 @@ docker compose up --build
 
 La primera vez tarda unos minutos (instala dependencias dentro de los contenedores).
 
-| Servicio | URL |
-|---|---|
-| Front (Angular) | http://localhost:4200 |
-| API (Laravel) | http://localhost:8000/api |
+| Servicio        | URL                       |
+| --------------- | ------------------------- |
+| Front (Angular) | http://localhost:4200     |
+| API (Laravel)   | http://localhost:8000/api |
 
-El front proxea `/api` hacia la API, por eso no hay CORS que configurar en desarrollo.
+El front proxea `/api` hacia la API, para no configurar CORS en desarrollo.
 
 ### Tests
 
@@ -51,13 +51,13 @@ curl -X POST -H "X-Signature: $SIG" -H 'Content-Type: application/json' -H 'Acce
 
 ## Endpoints
 
-| Método | Ruta | Descripción | Errores |
-|---|---|---|---|
-| POST | `/api/documents` | Multipart: `title`, `file` (PDF, imagen u ofimática ≤ 2 MB), `signers[i][rut]`, `signers[i][email]`. 201 con documento y `sign_links`. | 422 |
-| GET | `/api/documents` | Lista paginada con `status`, `signed_count`, `signers_count` y firmantes. | |
-| GET | `/api/sign/{token}` | Datos del documento y del firmante. | 404, 410 si expiró |
-| POST | `/api/sign/{token}` | Firma al dueño del token. | 404, 409 si ya firmó, 410 si expiró |
-| POST | `/api/webhooks/signer-signed` | Body `{"token": "..."}` + header `X-Signature`. Idempotente. | 401, 404, 410, 422 |
+| Método | Ruta                          | Descripción                                                                                                                            | Errores                             |
+| ------ | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| POST   | `/api/documents`              | Multipart: `title`, `file` (PDF, imagen u ofimática ≤ 2 MB), `signers[i][rut]`, `signers[i][email]`. 201 con documento y `sign_links`. | 422                                 |
+| GET    | `/api/documents`              | Lista paginada con `status`, `signed_count`, `signers_count` y firmantes.                                                              |                                     |
+| GET    | `/api/sign/{token}`           | Datos del documento y del firmante.                                                                                                    | 404, 410 si expiró                  |
+| POST   | `/api/sign/{token}`           | Firma al dueño del token.                                                                                                              | 404, 409 si ya firmó, 410 si expiró |
+| POST   | `/api/webhooks/signer-signed` | Body `{"token": "..."}` + header `X-Signature`. Idempotente.                                                                           | 401, 404, 410, 422                  |
 
 Todos los errores son JSON con `message` (y `errors` en 422).
 
@@ -70,18 +70,19 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 - **Expiración del enlace:** cada token tiene `token_expires_at` (por defecto 7 días desde la creación; se cambia con `SIGN_TOKEN_TTL_DAYS`). Un enlace vencido responde **410 Gone** en consulta, firma y webhook. La condición de expiración va dentro del `UPDATE` atómico de la firma, así que no se puede firmar justo después de vencer. Quien ya firmó antes de que venciera puede seguir viendo su firma. El plazo es fijo: no hay reenvío ni renovación del enlace.
 - **RUT chileno** validado con módulo 11 y con un único formato permitido: sin puntos y con guión (`12345678-5`). Los RUT con puntos o sin guión se rechazan con 422. La `k` se pasa a mayúscula para que `10000013-k` y `10000013-K` cuenten como el mismo firmante. El campo del front se formatea mientras se escribe o se pega (solo dígitos y K, con guión); la validación real sigue siendo la del servidor.
 - **Tipos de archivo:** PDF, imágenes (jpg, png, webp) y ofimática (doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp), máx. 2 MB. `mimes` valida por el contenido real del archivo, no solo por la extensión. El límite coincide con el `upload_max_filesize` por defecto de PHP (2 MB), que el Dockerfile deja explícito. No se convierte ni se previsualiza el archivo.
-- **Archivos** en el disco `local` (privado, no servido públicamente). Si falla la transacción se borra el archivo para no dejar huérfanos.
+- **Archivos** en el disco `local`. Si falla la transacción se borra el archivo para no dejar huérfanos.
 - **SQLite** para desarrollo, demo y tests, por simplicidad (cero servicios extra). En producción usaría MariaDB/PostgreSQL; el código no depende de SQLite.
 - **Sin autenticación, sin correo real ni colas**, a propósito: es una PoC acotada en tiempo. Los enlaces de firma se muestran al crear el documento.
 - **Docker mínimo:** `php artisan serve` y `ng serve`, adecuado para desarrollo, no para producción.
 
 ## Qué quedó fuera / siguientes pasos
 
-- Autenticación de quien crea documentos y permisos para listarlos.
-- Envío real de correos con el enlace (cola + `Mailable`), y reenvío.
-- Renovar/reenviar enlaces vencidos y guardar solo el hash del token en base de datos.
-- Descarga/visualización del documento en la página de firma y firma electrónica con validez legal.
-- Almacenamiento en S3, imagen Docker de producción (nginx + php-fpm, build de Angular), CI.
+- Autenticación y autorización de usuarios / administradores / etc.
+- Gestión de documentos.
+- Envío real de correos con el enlace y reenvío en caso de expiración.
+- Renovar/reenviar enlaces vencidos y gestión de tokens de validación.
+- Descarga/visualización del documentos firmados.
+- CI/CD y despliegue en producción del proyecto.
 - Tests end-to-end del front (Playwright).
 
 ## Estructura

@@ -21,22 +21,22 @@ class DocumentStatusTest extends TestCase
         return $document;
     }
 
-    public function test_pendiente_when_nobody_signed(): void
+    public function test_none(): void
     {
         $this->assertSame(DocumentStatus::Pendiente, $this->documentWith(SignerState::Pendiente, SignerState::Pendiente)->status());
     }
 
-    public function test_firmado_parcial_when_some_signed(): void
+    public function test_some(): void
     {
         $this->assertSame(DocumentStatus::FirmadoParcial, $this->documentWith(SignerState::Firmado, SignerState::Pendiente)->status());
     }
 
-    public function test_completo_when_everybody_signed(): void
+    public function test_all(): void
     {
         $this->assertSame(DocumentStatus::Completo, $this->documentWith(SignerState::Firmado, SignerState::Firmado)->status());
     }
 
-    public function test_single_signer_signed_is_completo(): void
+    public function test_single(): void
     {
         $this->assertSame(DocumentStatus::Completo, $this->documentWith(SignerState::Firmado)->status());
     }
