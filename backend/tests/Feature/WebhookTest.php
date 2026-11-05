@@ -18,8 +18,8 @@ class WebhookTest extends TestCase
         config(['services.webhook.secret' => self::SECRET]);
 
         $document = Document::create(['title' => 'Doc', 'file_path' => 'documents/x.pdf']);
-        $document->signers()->create(['rut' => '11111111-1', 'email' => 'a@x.cl', 'token' => str_repeat('a', 64)]);
-        $document->signers()->create(['rut' => '12345678-5', 'email' => 'b@x.cl', 'token' => str_repeat('b', 64)]);
+        $document->signers()->create(['rut' => '11111111-1', 'email' => 'a@x.cl', 'token' => str_repeat('a', 64), 'token_expires_at' => now()->addDays(7)]);
+        $document->signers()->create(['rut' => '12345678-5', 'email' => 'b@x.cl', 'token' => str_repeat('b', 64), 'token_expires_at' => now()->addDays(7)]);
     }
 
     private function send(array $body, ?string $signature = null)
@@ -70,6 +70,15 @@ class WebhookTest extends TestCase
 
         $this->send(['token' => str_repeat('a', 64)], hash_hmac('sha256', json_encode(['token' => str_repeat('a', 64)]), ''))
             ->assertUnauthorized();
+    }
+
+    public function test_expired_token_returns_410_and_does_not_sign(): void
+    {
+        $this->travel(8)->days();
+
+        $this->send(['token' => str_repeat('a', 64)])->assertStatus(410);
+
+        $this->assertDatabaseMissing('signers', ['state' => 'firmado']);
     }
 
     public function test_unknown_token_returns_404(): void

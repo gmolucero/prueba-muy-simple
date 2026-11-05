@@ -6,7 +6,7 @@ import { SignPage } from './sign-page';
 const payload = (state: 'pendiente' | 'firmado') => ({
   data: {
     document: { id: 1, title: 'Contrato', status: 'pendiente' },
-    signer: { rut: '11111111-1', email: 'a@x.cl', state, signed_at: null },
+    signer: { rut: '11111111-1', email: 'a@x.cl', state, signed_at: null, expires_at: '2026-12-01T10:00:00+00:00' },
   },
 });
 
@@ -26,6 +26,14 @@ describe('SignPage', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(el().querySelector('[role=alert]')?.textContent).toContain('Enlace de firma no válido.');
+  });
+
+  it('muestra un mensaje claro si el enlace expiró', async () => {
+    const { fixture, http, el } = setup('viejo');
+    http.expectOne('/api/sign/viejo').flush({ message: 'El enlace de firma expiró.' }, { status: 410, statusText: 'Gone' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(el().querySelector('[role=alert]')?.textContent).toContain('expiró');
   });
 
   it('permite firmar y confirma el resultado', async () => {

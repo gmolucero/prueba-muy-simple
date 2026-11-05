@@ -1,8 +1,10 @@
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ApiService, SignPayload, errorMessage } from '../api.service';
 
 @Component({
   selector: 'app-sign-page',
+  imports: [DatePipe],
   template: `
     <h2>Firma de documento</h2>
 
@@ -19,6 +21,7 @@ import { ApiService, SignPayload, errorMessage } from '../api.service';
           {{ justSigned() ? '¡Firma registrada correctamente!' : 'Este firmante ya firmó este documento.' }}
         </p>
       } @else {
+        <p><small>Este enlace es válido hasta el {{ d.signer.expires_at | date: 'dd-MM-yyyy HH:mm' }}.</small></p>
         <button type="button" (click)="sign()" [disabled]="signing()">
           {{ signing() ? 'Firmando…' : 'Firmar documento' }}
         </button>

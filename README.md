@@ -23,8 +23,8 @@ El front proxea `/api` hacia la API, por eso no hay CORS que configurar en desar
 ### Tests
 
 ```bash
-docker compose run --rm api php artisan test                      # backend (44 tests)
-docker compose run --rm -e CI=true web npx ng test --watch=false  # frontend (7 tests)
+docker compose run --rm api php artisan test                      # backend (49 tests)
+docker compose run --rm -e CI=true web npx ng test --watch=false  # frontend (8 tests)
 ```
 
 ## Flujo de uso
@@ -55,9 +55,9 @@ curl -X POST -H "X-Signature: $SIG" -H 'Content-Type: application/json' -H 'Acce
 |---|---|---|---|
 | POST | `/api/documents` | Multipart: `title`, `file` (PDF, imagen u ofimática ≤ 10 MB), `signers[i][rut]`, `signers[i][email]`. 201 con documento y `sign_links`. | 422 |
 | GET | `/api/documents` | Lista paginada con `status`, `signed_count`, `signers_count` y firmantes. | |
-| GET | `/api/sign/{token}` | Datos del documento y del firmante. | 404 |
-| POST | `/api/sign/{token}` | Firma al dueño del token. | 404, 409 si ya firmó |
-| POST | `/api/webhooks/signer-signed` | Body `{"token": "..."}` + header `X-Signature`. Idempotente. | 401, 404, 422 |
+| GET | `/api/sign/{token}` | Datos del documento y del firmante. | 404, 410 si expiró |
+| POST | `/api/sign/{token}` | Firma al dueño del token. | 404, 409 si ya firmó, 410 si expiró |
+| POST | `/api/webhooks/signer-signed` | Body `{"token": "..."}` + header `X-Signature`. Idempotente. | 401, 404, 410, 422 |
 
 Todos los errores son JSON con `message` (y `errors` en 422).
 
@@ -67,6 +67,7 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 - **Firma atómica e idempotente.** `Signer::markAsSigned()` hace un `UPDATE ... WHERE state = 'pendiente'`: dos peticiones simultáneas con el mismo token no pueden firmar ambas, y la fecha de la primera firma nunca se pisa. La API de firma responde 409; el webhook responde 200 con `changed: false`, porque reintentar un callback no debe ser un error.
 - **Webhook protegido con HMAC-SHA256** sobre el cuerpo crudo, comparado con `hash_equals`. Si no hay secreto configurado se rechaza todo (fail closed). El secreto está en `WEBHOOK_SECRET` (`backend/.env`).
 - **Token** aleatorio de 64 caracteres, con índice único, oculto en las respuestas salvo en la creación del documento. Throttle de 30/min en la firma.
+- **Expiración del enlace:** cada token tiene `token_expires_at` (por defecto 7 días desde la creación; se cambia con `SIGN_TOKEN_TTL_DAYS`). Un enlace vencido responde **410 Gone** en consulta, firma y webhook. La condición de expiración va dentro del `UPDATE` atómico de la firma, así que no se puede firmar justo después de vencer. Quien ya firmó antes de que venciera puede seguir viendo su firma. El plazo es fijo: no hay reenvío ni renovación del enlace.
 - **RUT chileno** validado con módulo 11 y con un único formato permitido: sin puntos y con guión (`12345678-5`). Los RUT con puntos o sin guión se rechazan con 422. La `k` se pasa a mayúscula para que `10000013-k` y `10000013-K` cuenten como el mismo firmante. Hay validación en el cliente solo por UX; la válida es la del servidor.
 - **Tipos de archivo:** PDF, imágenes (jpg, png, webp) y ofimática (doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp), máx. 10 MB. `mimes` valida por el contenido real del archivo, no solo por la extensión. El Dockerfile sube `upload_max_filesize` a 10 MB (PHP trae 2 MB por defecto). No se convierte ni se previsualiza el archivo.
 - **Archivos** en el disco `local` (privado, no servido públicamente). Si falla la transacción se borra el archivo para no dejar huérfanos.
@@ -78,7 +79,7 @@ Todos los errores son JSON con `message` (y `errors` en 422).
 
 - Autenticación de quien crea documentos y permisos para listarlos.
 - Envío real de correos con el enlace (cola + `Mailable`), y reenvío.
-- Expiración de tokens y guardar solo su hash en base de datos.
+- Renovar/reenviar enlaces vencidos y guardar solo el hash del token en base de datos.
 - Descarga/visualización del documento en la página de firma y firma electrónica con validez legal.
 - Almacenamiento en S3, imagen Docker de producción (nginx + php-fpm, build de Angular), CI.
 - Tests end-to-end del front (Playwright).

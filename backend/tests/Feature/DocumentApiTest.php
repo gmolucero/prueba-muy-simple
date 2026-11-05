@@ -36,6 +36,11 @@ class DocumentApiTest extends TestCase
             ->assertJsonMissingPath('data.signers.0.token');
 
         $this->assertDatabaseHas('signers', ['rut' => '11111111-1', 'state' => 'pendiente']);
+        $this->assertEqualsWithDelta(
+            now()->addDays(7)->timestamp,
+            \Carbon\Carbon::parse($response->json('sign_links.0.expires_at'))->timestamp,
+            5,
+        );
         $this->assertStringContainsString('/sign/', $response->json('sign_links.0.sign_url'));
         $this->assertCount(1, Storage::disk('local')->files('documents'));
     }

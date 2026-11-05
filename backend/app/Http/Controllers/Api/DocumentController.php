@@ -26,7 +26,9 @@ class DocumentController extends Controller
         $path = $request->file('file')->store('documents'); // disco local (privado)
 
         try {
-            $document = DB::transaction(function () use ($request, $path) {
+            $expiresAt = now()->addDays(config('signing.token_ttl_days'));
+
+            $document = DB::transaction(function () use ($request, $path, $expiresAt) {
                 $document = Document::create([
                     'title' => $request->validated('title'),
                     'file_path' => $path,
@@ -37,6 +39,7 @@ class DocumentController extends Controller
                         'rut' => $signer['rut'],
                         'email' => $signer['email'],
                         'token' => Str::random(64),
+                        'token_expires_at' => $expiresAt,
                         'state' => SignerState::Pendiente,
                     ]);
                 }
@@ -52,6 +55,7 @@ class DocumentController extends Controller
         $links = $document->signers->map(fn ($s) => [
             'rut' => $s->rut,
             'email' => $s->email,
+            'expires_at' => $s->token_expires_at->toIso8601String(),
             'sign_url' => rtrim(config('app.frontend_url'), '/').'/sign/'.$s->makeVisible('token')->token,
         ])->all();
 

@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('rut');
             $table->string('email');
             $table->string('token', 64)->unique();
+            $table->timestamp('token_expires_at');
             $table->string('state')->default('pendiente');
             $table->timestamp('signed_at')->nullable();
             $table->timestamps();

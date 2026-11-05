@@ -17,6 +17,10 @@ class WebhookController extends Controller
         $signer = Signer::where('token', $data['token'])->first()
             ?? abort(404, 'Enlace de firma no válido.');
 
+        if (! $signer->isSigned() && $signer->isExpired()) {
+            return response()->json(['message' => 'El enlace de firma expiró.'], 410);
+        }
+
         $changed = $signer->markAsSigned(now());
 
         // Repetir el webhook no es un error: responde 200 con changed=false.

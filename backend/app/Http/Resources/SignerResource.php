@@ -15,6 +15,7 @@ class SignerResource extends JsonResource
             'email' => $this->email,
             'state' => $this->state->value,
             'signed_at' => $this->signed_at?->toIso8601String(),
+            'expires_at' => $this->token_expires_at->toIso8601String(),
         ];
     }
 }

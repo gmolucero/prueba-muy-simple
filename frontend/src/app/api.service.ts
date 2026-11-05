@@ -9,6 +9,7 @@ export interface Signer {
   email: string;
   state: 'pendiente' | 'firmado';
   signed_at: string | null;
+  expires_at: string;
 }
 
 export interface DocumentItem {
@@ -24,6 +25,7 @@ export interface DocumentItem {
 export interface SignLink {
   rut: string;
   email: string;
+  expires_at: string;
   sign_url: string;
 }
 

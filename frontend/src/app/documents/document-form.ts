@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -6,7 +7,7 @@ import { rutValidator } from '../shared/rut';
 
 @Component({
   selector: 'app-document-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe],
   template: `
     <h2>Nuevo documento</h2>
 
@@ -15,7 +16,7 @@ import { rutValidator } from '../shared/rut';
         <p><strong>Documento creado.</strong> Enlaces de firma (no se envían correos en esta PoC):</p>
         <ul>
           @for (link of created; track link.rut) {
-            <li>{{ link.email }} ({{ link.rut }}): <a [href]="link.sign_url">{{ link.sign_url }}</a></li>
+            <li>{{ link.email }} ({{ link.rut }}): <a [href]="link.sign_url">{{ link.sign_url }}</a> (vence el {{ link.expires_at | date: 'dd-MM-yyyy HH:mm' }})</li>
           }
         </ul>
         <a routerLink="/">Ver documentos</a>

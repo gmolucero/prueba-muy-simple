@@ -11,15 +11,38 @@ class SigningController extends Controller
 {
     public function show(string $token): JsonResponse
     {
-        return $this->payload($this->findOrFail($token));
+        $signer = $this->findOrFail($token);
+
+        // Un enlace vencido deja de servir, salvo para ver que ya se firmó.
+        if (! $signer->isSigned() && $signer->isExpired()) {
+            return $this->expired();
+        }
+
+        return $this->payload($signer);
+    }
+
+    private function expired(): JsonResponse
+    {
+        return response()->json(['message' => 'El enlace de firma expiró.'], 410);
     }
 
     public function sign(string $token): JsonResponse
     {
         $signer = $this->findOrFail($token);
 
-        if (! $signer->markAsSigned(now())) {
+        if ($signer->isSigned()) {
             return response()->json(['message' => 'Este firmante ya firmó.'], 409);
+        }
+
+        if ($signer->isExpired()) {
+            return $this->expired();
+        }
+
+        if (! $signer->markAsSigned(now())) {
+            // Perdió una carrera: firmó (o expiró) entre la lectura y el UPDATE.
+            return $signer->fresh()->isSigned()
+                ? response()->json(['message' => 'Este firmante ya firmó.'], 409)
+                : $this->expired();
         }
 
         return $this->payload($signer);
