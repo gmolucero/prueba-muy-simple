@@ -31,7 +31,7 @@ class SigningTest extends TestCase
             ->assertJsonPath('data.signer.state', 'pendiente');
     }
 
-    public function test_signing_moves_document_from_pendiente_to_parcial_to_completo(): void
+    public function test_sign_moves_status_to_completo(): void
     {
         [$document] = $this->documentWithTwoSigners();
 
@@ -72,7 +72,7 @@ class SigningTest extends TestCase
         $this->assertEquals($firstDate, Signer::where('token', $token)->value('signed_at'));
     }
 
-    public function test_expired_link_returns_410_on_show_and_sign_and_does_not_sign(): void
+    public function test_expired_link_returns_410(): void
     {
         $this->documentWithTwoSigners();
         $token = str_repeat('a', 64);
@@ -94,7 +94,7 @@ class SigningTest extends TestCase
         $this->postJson('/api/sign/'.str_repeat('a', 64))->assertOk();
     }
 
-    public function test_signer_who_signed_before_expiry_can_still_see_it_after(): void
+    public function test_signed_link_visible_after_expiry(): void
     {
         $this->documentWithTwoSigners();
         $token = str_repeat('a', 64);

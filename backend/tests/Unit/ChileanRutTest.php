@@ -43,7 +43,7 @@ class ChileanRutTest extends TestCase
         ];
     }
 
-    public function test_accepts_valid_normalized_ruts(): void
+    public function test_normalize(): void
     {
         $this->assertSame('12345678-5', Rut::normalize('12345678-5'));
         $this->assertSame('10000013-K', Rut::normalize('10000013-k'));

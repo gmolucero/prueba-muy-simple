@@ -24,7 +24,7 @@ class DocumentApiTest extends TestCase
         ], $override);
     }
 
-    public function test_creates_document_with_signers_and_returns_sign_links(): void
+    public function test_creates_document(): void
     {
         Storage::fake('local');
 
