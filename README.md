@@ -7,7 +7,7 @@ API en **Laravel 13** + front en **Angular 22**. Se sube un documento (PDF, imag
 Requisitos: Docker y Docker Compose.
 
 ```bash
-export GID=$(id -g)        # para que los archivos generados sean tuyos (UID ya existe en bash)
+export UID GID=$(id -g)    # para que los archivos generados sean tuyos (UID existe en bash, pero hay que exportarlo)
 docker compose up --build
 ```
 
